@@ -1,4 +1,5 @@
 import axios from 'axios';
+import async from 'async'
 
 interface LatLong {
   lat: number,
@@ -17,18 +18,18 @@ interface SunTimes {
   astronomical_twilight_end: string
 }
 
-const getSunTime = (lat: number, long: number, date: string) => {
-  return axios.get('https://api.sunrise-sunset.org/json?lat='+lat+'&lng='+long+'&date='+date)
-  .then((response: { data: {results: SunTimes, status: string} }) => {
-    console.log('The data is: ', response.data.results);
+const getSunTime = (latLong:LatLong) => {
+  console.log('---', latLong.lat, latLong.long)
+  axios.get('https://api.sunrise-sunset.org/json?lat='+latLong.lat+'&lng='+latLong.long)
+  .then( (response: { data: {results: SunTimes, status: string} }) => {
+  console.log('The data is: ', response.data.results);
     return response.data;
-  }, (error: string) => {
-    console.log(error);
-    return;
-  });
+  } ).catch( ( error ) => {
+    console.log( error );
+  } )
 };
 
-getSunTime(36.7201600, -4.4203400, '2021-08-25');
+
 
 const generateRandomLatLong = ():LatLong[] => {
 
@@ -41,12 +42,24 @@ const generateRandomLatLong = ():LatLong[] => {
     const long = parseFloat((Math.random()*180).toFixed(7));
 
     latLongList.push({lat,long})
-    console.log(count, lat, long);
+    //console.log(count, lat, long);
   }
   return latLongList;
 }
-generateRandomLatLong();
+const logSunTimes = () => {
+  const randomLongLat = generateRandomLatLong();
+
+  async.eachOfLimit(randomLongLat, 5, getSunTime, function (err) {
+    if (err) throw err;
+  });
+  console.log('+++++++')
+}
+logSunTimes();
+//getSunTime(36.7201600, -4.4203400);
+
+
 
 module.exports = {
-  getSunTime: getSunTime
+  getSunTime: getSunTime,
+  generateRandomLatLong: generateRandomLatLong
 };
